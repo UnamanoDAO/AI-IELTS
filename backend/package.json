@@ -1,7 +1,7 @@
 {
-  "name": "ielts-vocabulary-backend",
+  "name": "quackquack-ielts-backend",
   "version": "1.0.0",
-  "description": "Backend API for IELTS Vocabulary Learning Platform",
+  "description": "Backend API for QuackQuack IELTS Vocabulary Learning Platform",
   "main": "src/app.js",
   "type": "module",
   "scripts": {

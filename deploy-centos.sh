@@ -39,7 +39,7 @@ log_error() {
 
 # 配置变量
 DEPLOY_DIR="/root/AI-IELTS"
-REPO_URL="https://github.com/UnamanoDAO/AI-IELTS.git"
+REPO_URL="https://gh-proxy.org/https://github.com/UnamanoDAO/AI-IELTS.git"
 BRANCH="master"
 
 ##############################################################################

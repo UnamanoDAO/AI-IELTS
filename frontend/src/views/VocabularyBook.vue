@@ -339,6 +339,12 @@ async function startTest() {
   margin: 0;
 }
 
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 18px;
+  }
+}
+
 .header-actions {
   display: flex;
   gap: 12px;
@@ -430,10 +436,26 @@ async function startTest() {
   color: #EDB01D;
 }
 
+@media (max-width: 768px) {
+  .stat-value {
+    font-size: 24px;
+  }
+}
+
 .stat-label {
   font-size: 14px;
   color: #666;
   margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .stat-item {
+    padding: 15px 10px;
+  }
 }
 
 .filter-tabs {

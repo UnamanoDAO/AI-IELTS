@@ -259,9 +259,10 @@ const overallSummary = computed(() => {
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem;
-  background: rgba(237, 176, 29, 0.05);
+  background: linear-gradient(135deg, rgba(237, 176, 29, 0.12) 0%, rgba(237, 176, 29, 0.06) 100%);
   border-radius: 1rem;
-  border: 1px solid rgba(237, 176, 29, 0.15);
+  border: 1px solid rgba(237, 176, 29, 0.25);
+  box-shadow: 0 2px 8px rgba(237, 176, 29, 0.08);
 }
 
 .header-content {
