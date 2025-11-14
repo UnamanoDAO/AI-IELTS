@@ -2,25 +2,29 @@
 
 FROM node:18-alpine AS deps
 WORKDIR /app
-COPY backend/package.json ./package.json
-COPY backend/package-lock.json ./package-lock.json
-# 如果 package-lock.json 缺失会失败，我们提供回退策略
-RUN if [ -f package-lock.json ]; then \
-      npm ci --omit=dev; \
-    else \
-      echo "Warning: package-lock.json not found, falling back to npm install"; \
-      npm install --omit=dev; \
-    fi
+COPY backend/package*.json ./
+RUN npm ci --omit=dev --legacy-peer-deps || npm install --omit=dev --legacy-peer-deps
 
 FROM node:18-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY backend ./backend
+# Install necessary system dependencies
+RUN apk add --no-cache \
+    curl \
+    ca-certificates
 
-WORKDIR /app/backend
+COPY --from=deps /app/node_modules ./node_modules
+COPY backend ./
+
+# Create directories for logs and temp files
+RUN mkdir -p logs public/audio
+
 EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/api/health || exit 1
 
 CMD ["node", "src/app.js"]
 

@@ -5,11 +5,28 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.backend
+    container_name: lean-english-backend
     env_file:
       - .env
     ports:
       - "3000:3000"
+    volumes:
+      - backend-logs:/app/logs
+      - backend-audio:/app/public/audio
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - lean-english-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     build:
@@ -17,10 +34,29 @@ services:
       dockerfile: docker/Dockerfile.frontend
       args:
         VITE_API_BASE_URL: /api
+    container_name: lean-english-frontend
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
+    networks:
+      - lean-english-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  backend-logs:
+    driver: local
+  backend-audio:
+    driver: local
+
+networks:
+  lean-english-network:
+    driver: bridge
 
 
