@@ -1,0 +1,65 @@
+========================================
+阅读文章语音配音 - 配置步骤
+========================================
+
+步骤 1: 获取语音合成 AppKey
+----------------------------
+1. 访问: https://nls-portal.console.aliyun.com/
+2. 开通"长文本语音合成"商用版
+3. 创建项目，获取 AppKey
+
+
+步骤 2: 手动创建 .env 文件
+----------------------------
+在 backend 目录下创建或编辑 .env 文件，添加以下内容：
+
+# 阿里云访问凭证（请使用新创建的 AccessKey！）
+ALIYUN_ACCESS_KEY_ID=你的新AccessKey_ID
+ALIYUN_ACCESS_KEY_SECRET=你的新AccessKey_Secret
+
+# 阿里云语音合成 AppKey
+ALIYUN_TTS_APP_KEY=你的AppKey
+
+# 数据库配置（如果还没有）
+DB_HOST=rm-2ze58tvrta52qmyz1lo.mysql.rds.aliyuncs.com
+DB_PORT=3306
+DB_USER=sousoujuan
+DB_PASSWORD=Xj196210*
+DB_NAME=english
+
+# 服务器配置
+PORT=3000
+NODE_ENV=production
+
+# CORS 配置
+CORS_ORIGIN=*
+
+
+步骤 3: 测试配置
+----------------------------
+cd backend
+npm run test-aliyun
+
+
+步骤 4: 添加数据库字段
+----------------------------
+npm run add-audio-field
+
+
+步骤 5: 测试生成音频（1篇）
+----------------------------
+npm run generate-audio 1
+
+
+步骤 6: 批量生成所有音频
+----------------------------
+npm run generate-audio
+
+
+========================================
+完成！现在可以在前端看到音频播放器了
+========================================
+
+
+
+

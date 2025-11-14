@@ -1,0 +1,57 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git remote add:*)",
+      "Bash(git checkout:*)",
+      "Bash(git rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(dir:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git log:*)",
+      "Bash(test:*)",
+      "Bash(git reset:*)",
+      "Bash(frontend/src/App.vue.backup)",
+      "Bash(iconv:*)",
+      "Bash(frontend/src/App.vue.fixed)",
+      "Bash(powershell:*)",
+      "Bash(taskkill:*)",
+      "Bash(findstr:*)",
+      "Bash(netstat:*)",
+      "Bash(node:*)"
+    ],
+    "deny": [
+      "Bash(npm run dev:*)",
+      "Bash(npm start:*)",
+      "Bash(npm run serve:*)",
+      "Bash(yarn dev:*)",
+      "Bash(yarn start:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm start:*)"
+    ],
+    "ask": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(npm run dev:*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚠️  服务启动命令已被阻止。请手动执行: npm run dev' && exit 2"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(npm start:*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚠️  服务启动命令已被阻止。请手动执行: npm start' && exit 2"
+          }
+        ]
+      }
+    ]
+  }
+}

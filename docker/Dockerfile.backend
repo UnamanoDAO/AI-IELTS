@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1
+
+FROM node:18-alpine AS deps
+WORKDIR /app
+COPY backend/package.json ./package.json
+COPY backend/package-lock.json ./package-lock.json
+# 如果 package-lock.json 缺失会失败，我们提供回退策略
+RUN if [ -f package-lock.json ]; then \
+      npm ci --omit=dev; \
+    else \
+      echo "Warning: package-lock.json not found, falling back to npm install"; \
+      npm install --omit=dev; \
+    fi
+
+FROM node:18-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY backend ./backend
+
+WORKDIR /app/backend
+EXPOSE 3000
+
+CMD ["node", "src/app.js"]
+

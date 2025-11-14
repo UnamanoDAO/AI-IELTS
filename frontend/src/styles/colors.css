@@ -1,0 +1,27 @@
+/* Global Color Variables */
+:root {
+  /* Primary Colors */
+  --color-primary: #A09CF3;
+  --color-secondary: #F799A7;
+  --color-white: #FFFFFF;
+
+  /* Variations */
+  --color-primary-dark: #8A85E0;
+  --color-primary-light: #B8B5F7;
+  --color-secondary-dark: #F47B8C;
+  --color-secondary-light: #FAADB8;
+
+  /* Text Colors */
+  --color-text-dark: #333333;
+  --color-text-medium: #666666;
+  --color-text-light: #999999;
+
+  /* Background Colors */
+  --color-bg-light: #F5F5F5;
+  --color-bg-white: #FFFFFF;
+
+  /* Success/Error/Warning */
+  --color-success: #4CAF50;
+  --color-error: #F44336;
+  --color-warning: #FF9800;
+}

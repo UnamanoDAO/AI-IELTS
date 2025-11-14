@@ -1,0 +1,14 @@
+node_modules/
+.env
+data/
+public/audio/
+*.log
+.DS_Store
+
+
+.env
+data/
+public/audio/
+*.log
+.DS_Store
+
