@@ -8,7 +8,7 @@
           @click="startTest"
           class="btn-test-header"
         >
-          开始连线测试
+          测试
         </button>
         <button @click="showAddWordModal = true" class="btn-add">+ 添加单词</button>
       </div>
