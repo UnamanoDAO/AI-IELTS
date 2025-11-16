@@ -379,11 +379,13 @@ export default {
           content: msg.content
         }))
 
-        // 调用AI API
+        // 调用AI API (设置120秒超时,因为思考模型需要较长时间)
         const data = await api.post('/assistant/chat', {
           message: text,
           conversationHistory,
           conversationId: currentConversationId.value
+        }, {
+          timeout: 120000 // 120秒超时
         })
 
         const assistantMessage = data.data
@@ -813,6 +815,7 @@ export default {
 .messages-container {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 20px;
   background: #F5EDE4;
 }
@@ -898,6 +901,8 @@ export default {
 
 .message-content {
   max-width: 70%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .message.user .message-content {
@@ -916,6 +921,8 @@ export default {
   padding: 12px 16px;
   font-size: 14px;
   line-height: 1.6;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .message-footer {
