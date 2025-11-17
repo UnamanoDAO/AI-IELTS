@@ -446,6 +446,13 @@ export async function chatWithAssistant(userMessage, conversationHistory = []) {
       messageCount: messages.length
     })
 
+    // 根据模型类型设置超时时间
+    // thinking 模型需要更长的思考时间
+    const isThinkingModel = AI_MODEL.includes('thinking') || AI_MODEL.includes('o1') || AI_MODEL.includes('o3')
+    const timeout = isThinkingModel ? 120000 : 60000 // thinking 模型 120 秒，普通模型 60 秒
+
+    console.log(`⏱️ 超时设置: ${timeout / 1000}秒 (${isThinkingModel ? '思考模型' : '普通模型'})`)
+
     // 调用AI API
     const response = await axios.post(
       AI_API_URL,
@@ -460,7 +467,7 @@ export async function chatWithAssistant(userMessage, conversationHistory = []) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${AI_API_KEY}`
         },
-        timeout: 30000
+        timeout: timeout
       }
     )
 

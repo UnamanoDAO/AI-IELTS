@@ -1,8 +1,8 @@
 <template>
   <div class="sidebar">
     <div class="sidebar-header">
-      <img src="/logo.png" alt="LeanEnglish" class="logo-image" />
-      <h1 class="logo-text">LeanEnglish</h1>
+      <img src="/logo.png" alt="QuackQuack" class="logo-image" />
+      <h1 class="logo-text">QuackQuack</h1>
     </div>
 
     <nav class="nav-menu">
@@ -36,7 +36,7 @@ import { computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useProgressStore } from '@/stores/progress';
-import { BookMarked, Target, BookOpen, DoorOpen } from 'lucide-vue-next';
+import { BookMarked, Target, BookOpen, DoorOpen, BookText } from 'lucide-vue-next';
 
 const router = useRouter();
 const route = useRoute();
@@ -45,12 +45,14 @@ const progressStore = useProgressStore();
 
 const menuItems = [
   { path: '/vocabulary-book', icon: 'book', label: '我的单词本' },
+  { path: '/reading-comprehension', icon: 'reading', label: '阅读理解' },
   { path: '/vocabulary-test', icon: 'target', label: '连线测试' },
   { path: '/units', icon: 'library', label: '课程单元' }
 ];
 
 const iconMap = {
   book: BookOpen,
+  reading: BookText,
   target: Target,
   library: BookMarked
 };

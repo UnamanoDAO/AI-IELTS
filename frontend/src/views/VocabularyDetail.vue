@@ -45,7 +45,15 @@
       <!-- Chinese Meaning -->
       <div class="section">
         <h3>中文释义</h3>
-        <div class="meaning-text" v-html="formattedMeaning"></div>
+        <div class="meaning-content">
+          <div
+            v-for="(line, index) in meaningLines"
+            :key="index"
+            :class="['meaning-line', { 'has-type': hasWordType(line) }]"
+          >
+            <span v-html="formatMeaningLine(line)"></span>
+          </div>
+        </div>
       </div>
 
       <!-- Word Breakdown -->
@@ -61,13 +69,39 @@
       </div>
 
       <!-- Derived Words -->
-      <div v-if="word.derived_words" class="section">
+      <div v-if="derivedWordsData.length > 0" class="section">
+        <h3>衍生词</h3>
+        <div class="derived-words-list">
+          <div v-for="(derived, index) in derivedWordsData" :key="index" class="derived-word-item">
+            <div class="derived-word-header">
+              <span class="derived-word-text">{{ derived.word }}</span>
+              <span v-if="derived.phonetic" class="derived-word-phonetic">{{ derived.phonetic }}</span>
+            </div>
+            <div v-if="derived.meaning" class="derived-word-meaning">{{ derived.meaning }}</div>
+            <div v-if="derived.usage" class="derived-word-usage">{{ derived.usage }}</div>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="word.derived_words" class="section">
         <h3>衍生词</h3>
         <p>{{ word.derived_words }}</p>
       </div>
 
       <!-- Common Usage -->
-      <div v-if="word.common_usage" class="section">
+      <div v-if="commonUsageData.length > 0" class="section">
+        <h3>常用用法</h3>
+        <div class="common-usage-list">
+          <div v-for="(usage, index) in commonUsageData" :key="index" class="usage-item">
+            <div class="usage-phrase">
+              <span class="phrase-icon">📌</span>
+              <span class="phrase-text">{{ usage.phrase }}</span>
+            </div>
+            <div v-if="usage.meaning" class="usage-meaning">含义：{{ usage.meaning }}</div>
+            <div v-if="usage.example" class="usage-example">例句：{{ usage.example }}</div>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="word.common_usage" class="section">
         <h3>常用用法</h3>
         <p>{{ word.common_usage }}</p>
       </div>
@@ -139,11 +173,57 @@ const usageExamples = computed(() => {
   return Array.isArray(word.value.usage_examples) ? word.value.usage_examples : [];
 });
 
-const formattedMeaning = computed(() => {
-  if (!word.value?.chinese_meaning) return '';
-  // Convert newlines to <br> tags for proper display
-  return word.value.chinese_meaning.replace(/\n/g, '<br>');
+const meaningLines = computed(() => {
+  if (!word.value?.chinese_meaning) return [];
+  return word.value.chinese_meaning.split('\n').filter(line => line.trim());
 });
+
+const derivedWordsData = computed(() => {
+  if (!word.value?.derived_words) return [];
+
+  // Try to parse as JSON (new format)
+  if (word.value.derived_words.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(word.value.derived_words);
+      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
+        return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to parse derived_words as JSON:', e);
+    }
+  }
+
+  // Old format or parse failed
+  return [];
+});
+
+const commonUsageData = computed(() => {
+  if (!word.value?.common_usage) return [];
+
+  // Try to parse as JSON (new format)
+  if (word.value.common_usage.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(word.value.common_usage);
+      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
+        return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to parse common_usage as JSON:', e);
+    }
+  }
+
+  // Old format or parse failed
+  return [];
+});
+
+const hasWordType = (line) => {
+  return /【[a-z\.]+】/.test(line);
+};
+
+const formatMeaningLine = (line) => {
+  // Format: 【n.】meaning → <span class="word-type">n.</span> meaning
+  return line.replace(/【([^】]+)】/g, '<span class="word-type">$1</span>');
+};
 
 onMounted(() => {
   loadWordDetail();
@@ -374,10 +454,32 @@ function goBack() {
   font-size: 16px;
 }
 
-.meaning-text {
+.meaning-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.meaning-line {
   color: #333;
   line-height: 1.8;
   font-size: 16px;
+  padding: 0.5rem 0;
+}
+
+.meaning-line.has-type {
+  border-left: 3px solid #EDB01D;
+  padding-left: 1rem;
+  margin-left: -0.25rem;
+}
+
+.meaning-line :deep(.word-type) {
+  color: #EDB01D;
+  font-weight: 700;
+  font-size: 0.9em;
+  margin-right: 0.5rem;
+  display: inline-block;
+  min-width: 40px;
 }
 
 .phonetic-section {
@@ -478,6 +580,103 @@ function goBack() {
   font-size: 14px;
   color: #666;
   margin: 5px 0 0 0;
+}
+
+/* Derived Words Styles */
+.derived-words-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.derived-word-item {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 3px solid #EDB01D;
+}
+
+.derived-word-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.derived-word-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2B82AC;
+}
+
+.derived-word-phonetic {
+  font-size: 14px;
+  color: #666;
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+}
+
+.derived-word-meaning {
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.derived-word-usage {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+  padding-left: 1rem;
+  border-left: 2px solid #ddd;
+}
+
+/* Common Usage Styles */
+.common-usage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.usage-item {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 3px solid #2B82AC;
+}
+
+.usage-phrase {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.phrase-icon {
+  font-size: 16px;
+}
+
+.phrase-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2B82AC;
+}
+
+.usage-meaning {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.usage-example {
+  font-size: 14px;
+  color: #555;
+  font-style: italic;
+  line-height: 1.6;
+  padding-left: 1.5rem;
+  border-left: 2px solid #ddd;
+  margin-left: 1.5rem;
 }
 
 @media (max-width: 768px) {

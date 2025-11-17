@@ -13,6 +13,8 @@ import assistantRouter from './routes/assistant.js'
 import authRouter from './routes/auth.js'
 import vocabularyBookRouter from './routes/vocabulary-book.js'
 import vocabularyTestRouter from './routes/vocabulary-test.js'
+import articlesRouter from './routes/articles.js'
+import vocabularyRouter from './routes/vocabulary.js'
 
 dotenv.config()
 
@@ -28,8 +30,8 @@ app.use(
     credentials: true
   })
 )
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: '10mb' }))
+app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
 app.use('/audio', express.static(path.join(__dirname, '../public/audio')))
 
@@ -42,6 +44,8 @@ app.use('/api/assistant', assistantRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/vocabulary-book', vocabularyBookRouter)
 app.use('/api/vocabulary-test', vocabularyTestRouter)
+app.use('/api/articles', articlesRouter)
+app.use('/api/vocabulary', vocabularyRouter)
 
 app.get('/api/health', async (req, res) => {
   const connected = await testConnection()
@@ -64,7 +68,9 @@ app.get('/', (req, res) => {
       quiz: '/api/quiz',
       auth: '/api/auth',
       vocabularyBook: '/api/vocabulary-book',
-      vocabularyTest: '/api/vocabulary-test'
+      vocabularyTest: '/api/vocabulary-test',
+      articles: '/api/articles',
+      vocabulary: '/api/vocabulary'
     }
   })
 })

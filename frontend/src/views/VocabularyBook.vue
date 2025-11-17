@@ -72,7 +72,9 @@
             <span v-else-if="word.is_mastered" class="badge-mastered">✓ 已掌握</span>
           </div>
           <p class="phonetic">{{ word.phonetic }}</p>
-          <p class="meaning">{{ word.chinese_meaning }}</p>
+          <div class="meaning">
+            <span v-html="formatMeaningPreview(word.chinese_meaning)"></span>
+          </div>
         </div>
         <div class="word-actions">
           <button @click.stop="deleteWord(word.id)" class="btn-delete">删除</button>
@@ -164,6 +166,25 @@ function isWordAnalyzing(word) {
 // 检查单词是否有拼写错误
 function isWordSpellingError(word) {
   return word.chinese_meaning && word.chinese_meaning.includes('拼写错误');
+}
+
+// Format meaning preview for list view (first 2 word types)
+function formatMeaningPreview(meaning) {
+  if (!meaning) return '';
+
+  // Split by newlines to get different word types
+  const lines = meaning.split('\n').filter(l => l.trim());
+
+  // Take first 2 lines max for preview
+  const preview = lines.slice(0, 2);
+
+  // Format each line
+  return preview
+    .map(line => {
+      // Replace 【词性】 with styled span
+      return line.replace(/【([^】]+)】/g, '<span class="word-type-inline">$1</span>');
+    })
+    .join('<br>');
 }
 
 // 开始轮询检查AI分析状态
@@ -645,6 +666,14 @@ async function startTest() {
   color: #666;
   font-size: 14px;
   margin: 5px 0;
+  line-height: 1.6;
+}
+
+.meaning :deep(.word-type-inline) {
+  color: #EDB01D;
+  font-weight: 600;
+  margin-right: 0.25rem;
+  font-size: 0.9em;
 }
 
 .word-actions {

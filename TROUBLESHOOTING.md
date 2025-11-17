@@ -1,628 +1,105 @@
-# Troubleshooting Guide
+# 故障排除指南
 
-## Issue 1: Database Connection Error
+## 500错误：Failed to fetch articles
 
-### Error Message:
-```
-✗ Database initialization failed: Access denied for user ''@'localhost' (using password: NO)
-```
-
-### Cause:
-The `.env` file is missing or not being read properly.
-
-### Solution:
-
-**Option A: Create .env file manually**
-
-Create a file named `.env` in the `backend/` directory with this content:
-
-```env
-# Database Configuration
-DB_HOST=rm-2ze58tvrta52qmyz1lo.mysql.rds.aliyuncs.com
-DB_PORT=3306
-DB_USER=zhizhijuan
-DB_PASSWORD=Xj196210*
-DB_NAME=english
-
-# Server Configuration
-PORT=3000
-NODE_ENV=development
-
-# CORS Configuration
-CORS_ORIGIN=http://localhost:5174
-```
-
-**Option B: Use setup script**
+### 快速修复步骤
 
 ```bash
+# 1. 停止后端服务 (Ctrl+C)
+
+# 2. 测试数据库连接
 cd backend
-npm run setup-env
-```
+node scripts/test-database.js
 
-Then verify the file exists:
-```bash
-# Windows PowerShell
-dir .env
+# 3. 如果表不存在，运行迁移
+node scripts/create-reading-tables.js
 
-# Should show the .env file
-```
-
-### Verify Database Connection:
-
-After creating .env, test the connection:
-
-```bash
-npm run init-db
-```
-
-You should see:
-```
-✓ Database connected successfully
-✓ Database schema created successfully
-```
-
----
-
-## Issue 2: Scraper Can't Find Markdown File
-
-### Error Message:
-```
-Markdown file not found
-```
-
-### Cause:
-The scraper is looking for `自然.md` but can't find it in the expected locations.
-
-### Solution:
-
-**Check file location:**
-
-The `自然.md` file should be in the root directory: `D:\Buiding3\LeanEnglish\自然.md`
-
-Verify it exists:
-```bash
-# From backend directory
-cd ..
-dir 自然.md
-```
-
-**Run scraper again:**
-
-```bash
-cd backend
-npm run scrape
-```
-
-You should see:
-```
-Starting vocabulary scraping...
-Error fetching vocabulary data: Request failed with status code 404
-Attempting fallback parsing...
-Using fallback data parsing method...
-Found markdown file at: [path]
-✓ Parsed 1 categories and 241 words from markdown
-```
-
----
-
-## Issue 3: No Words After Import
-
-### Symptoms:
-- Database initialized successfully
-- Import completed but no words showing in frontend
-
-### Solution:
-
-1. Check if scraper created data files:
-```bash
-cd backend
-dir data
-```
-
-You should see `categories.json` and `words.json`
-
-2. If files are missing, run scraper first:
-```bash
-npm run scrape
-```
-
-3. Then run import:
-```bash
-npm run import
-```
-
-Expected output:
-```
-Found 1 categories and 241 words
-✓ Imported 1 categories
-✓ Imported 241 words
-✓ Created 4 learning units
-✓ Data import completed successfully
-```
-
----
-
-## Complete Setup Sequence
-
-Here's the correct order to set everything up:
-
-```bash
-# 1. Navigate to backend
-cd backend
-
-# 2. Install dependencies
-npm install
-
-# 3. Create .env file (if needed)
-npm run setup-env
-
-# 4. Initialize database
-npm run init-db
-
-# 5. Scrape vocabulary data
-npm run scrape
-
-# 6. Import data to database
-npm run import
-
-# 7. Start backend server
-npm start
-```
-
-In a **new terminal**:
-
-```bash
-# 8. Navigate to frontend
-cd frontend
-
-# 9. Install dependencies
-npm install
-
-# 10. Start frontend server
+# 4. 重启后端
 npm run dev
 ```
 
----
+### 问题诊断
 
-## Verification Steps
+根据你的错误，文章创建成功（POST请求成功），但获取文章列表失败（GET请求500错误）。
 
-### 1. Check Backend Health
+**最可能的原因：**
+1. 数据库表创建不完整
+2. `axios` 未安装（用于有道词典API）
+3. 后端服务需要重启
 
-Open browser or use curl:
+### 详细步骤
+
+#### 步骤1：检查后端日志
+
+查看后端控制台，找到具体错误信息。可能看到：
+- `Table doesn't exist`
+- `Cannot find module`
+- 具体的JavaScript错误
+
+#### 步骤2：重新安装依赖
+
+```bash
+cd backend
+npm install
+```
+
+确保以下包已安装：
+- `axios` (用于HTTP请求)
+- `@alicloud/pop-core` (阿里云SDK，可选)
+- `mysql2` (数据库)
+- `express` (Web框架)
+
+#### 步骤3：验证数据库
+
+```bash
+node scripts/test-database.js
+```
+
+应该看到：
+```
+✅ Database connected
+✅ Found X articles
+✅ All database tests passed!
+```
+
+如果看到错误，运行：
+```bash
+node scripts/create-reading-tables.js
+```
+
+#### 步骤4：测试API
+
+使用浏览器或curl测试：
 ```bash
 curl http://localhost:3000/api/health
+curl http://localhost:3000/api/articles
 ```
 
-Should return:
-```json
-{
-  "status": "ok",
-  "database": "connected",
-  "timestamp": "..."
-}
-```
+### 已修复的问题
 
-### 2. Check Units Data
+我已经修复了以下问题：
 
-```bash
-curl http://localhost:3000/api/units
-```
+1. ✅ 将 `fetch` 改为 `axios`（Node.js兼容性）
+2. ✅ 添加阿里云API密钥检查（可选配置）
+3. ✅ 增强错误处理（不会因翻译失败而崩溃）
+4. ✅ 有道词典API作为主要翻译源（无需配置）
 
-Should return list of learning units.
-
-### 3. Check Frontend
-
-Open browser to `http://localhost:5174`
-
-You should see:
-- Home page with unit cards
-- Unit progress indicators
-- "开始学习" and "开始测验" buttons
-
----
-
-## Common Port Issues
-
-### Backend Port 3000 Already in Use
-
-Edit `backend/.env`:
-```env
-PORT=3001
-```
-
-### Frontend Port 5174 Already in Use
-
-Edit `frontend/vite.config.js`:
-```javascript
-server: {
-  port: 5174,  // Change this
-  // ...
-}
-```
-
----
-
-## Database Connection Issues
-
-### Can't Connect to Alibaba Cloud Database
-
-Check these:
-
-1. **Network connectivity:**
-   ```bash
-   ping rm-2ze58tvrta52qmyz1lo.mysql.rds.aliyuncs.com
-   ```
-
-2. **Credentials:** Verify in `.env` file
-
-3. **Firewall:** Ensure port 3306 is not blocked
-
-4. **Database exists:** The `english` database must exist on the server
-
----
-
-## Windows PowerShell Specific Issues
-
-### Execution Policy Error
-
-If you see "cannot be loaded because running scripts is disabled":
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-```
-
-### File Encoding Issues
-
-Ensure `.env` file is saved with UTF-8 encoding (no BOM).
-
----
-
-## Getting Help
-
-If issues persist:
-
-1. Check backend console for error messages
-2. Check browser console (F12) for frontend errors
-3. Verify all services are running:
-   - Backend: http://localhost:3000
-   - Frontend: http://localhost:5174
-4. Try restarting both servers
-
----
-
-## Quick Reset
-
-If you want to start fresh:
-
-```bash
-# Backend
-cd backend
-rm -rf node_modules data
-npm install
-npm run setup-env
-npm run init-db
-npm run scrape
-npm run import
-
-# Frontend
-cd ../frontend
-rm -rf node_modules
-npm install
-```
-
-Then start both servers again.
-
-
-
-## Issue 1: Database Connection Error
-
-### Error Message:
-```
-✗ Database initialization failed: Access denied for user ''@'localhost' (using password: NO)
-```
-
-### Cause:
-The `.env` file is missing or not being read properly.
-
-### Solution:
-
-**Option A: Create .env file manually**
-
-Create a file named `.env` in the `backend/` directory with this content:
+### 环境变量（可选）
 
 ```env
-# Database Configuration
-DB_HOST=rm-2ze58tvrta52qmyz1lo.mysql.rds.aliyuncs.com
+# backend/.env
+# 阿里云翻译API（可选，有备用方案）
+ALIYUN_ACCESS_KEY_ID=your_key
+ALIYUN_ACCESS_KEY_SECRET=your_secret
+
+# 数据库配置（必需）
+DB_HOST=localhost
 DB_PORT=3306
-DB_USER=zhizhijuan
-DB_PASSWORD=Xj196210*
-DB_NAME=english
-
-# Server Configuration
-PORT=3000
-NODE_ENV=development
-
-# CORS Configuration
-CORS_ORIGIN=http://localhost:5174
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=ielts_vocabulary
 ```
 
-**Option B: Use setup script**
+### 如果问题仍存在
 
-```bash
-cd backend
-npm run setup-env
-```
-
-Then verify the file exists:
-```bash
-# Windows PowerShell
-dir .env
-
-# Should show the .env file
-```
-
-### Verify Database Connection:
-
-After creating .env, test the connection:
-
-```bash
-npm run init-db
-```
-
-You should see:
-```
-✓ Database connected successfully
-✓ Database schema created successfully
-```
-
----
-
-## Issue 2: Scraper Can't Find Markdown File
-
-### Error Message:
-```
-Markdown file not found
-```
-
-### Cause:
-The scraper is looking for `自然.md` but can't find it in the expected locations.
-
-### Solution:
-
-**Check file location:**
-
-The `自然.md` file should be in the root directory: `D:\Buiding3\LeanEnglish\自然.md`
-
-Verify it exists:
-```bash
-# From backend directory
-cd ..
-dir 自然.md
-```
-
-**Run scraper again:**
-
-```bash
-cd backend
-npm run scrape
-```
-
-You should see:
-```
-Starting vocabulary scraping...
-Error fetching vocabulary data: Request failed with status code 404
-Attempting fallback parsing...
-Using fallback data parsing method...
-Found markdown file at: [path]
-✓ Parsed 1 categories and 241 words from markdown
-```
-
----
-
-## Issue 3: No Words After Import
-
-### Symptoms:
-- Database initialized successfully
-- Import completed but no words showing in frontend
-
-### Solution:
-
-1. Check if scraper created data files:
-```bash
-cd backend
-dir data
-```
-
-You should see `categories.json` and `words.json`
-
-2. If files are missing, run scraper first:
-```bash
-npm run scrape
-```
-
-3. Then run import:
-```bash
-npm run import
-```
-
-Expected output:
-```
-Found 1 categories and 241 words
-✓ Imported 1 categories
-✓ Imported 241 words
-✓ Created 4 learning units
-✓ Data import completed successfully
-```
-
----
-
-## Complete Setup Sequence
-
-Here's the correct order to set everything up:
-
-```bash
-# 1. Navigate to backend
-cd backend
-
-# 2. Install dependencies
-npm install
-
-# 3. Create .env file (if needed)
-npm run setup-env
-
-# 4. Initialize database
-npm run init-db
-
-# 5. Scrape vocabulary data
-npm run scrape
-
-# 6. Import data to database
-npm run import
-
-# 7. Start backend server
-npm start
-```
-
-In a **new terminal**:
-
-```bash
-# 8. Navigate to frontend
-cd frontend
-
-# 9. Install dependencies
-npm install
-
-# 10. Start frontend server
-npm run dev
-```
-
----
-
-## Verification Steps
-
-### 1. Check Backend Health
-
-Open browser or use curl:
-```bash
-curl http://localhost:3000/api/health
-```
-
-Should return:
-```json
-{
-  "status": "ok",
-  "database": "connected",
-  "timestamp": "..."
-}
-```
-
-### 2. Check Units Data
-
-```bash
-curl http://localhost:3000/api/units
-```
-
-Should return list of learning units.
-
-### 3. Check Frontend
-
-Open browser to `http://localhost:5174`
-
-You should see:
-- Home page with unit cards
-- Unit progress indicators
-- "开始学习" and "开始测验" buttons
-
----
-
-## Common Port Issues
-
-### Backend Port 3000 Already in Use
-
-Edit `backend/.env`:
-```env
-PORT=3001
-```
-
-### Frontend Port 5174 Already in Use
-
-Edit `frontend/vite.config.js`:
-```javascript
-server: {
-  port: 5174,  // Change this
-  // ...
-}
-```
-
----
-
-## Database Connection Issues
-
-### Can't Connect to Alibaba Cloud Database
-
-Check these:
-
-1. **Network connectivity:**
-   ```bash
-   ping rm-2ze58tvrta52qmyz1lo.mysql.rds.aliyuncs.com
-   ```
-
-2. **Credentials:** Verify in `.env` file
-
-3. **Firewall:** Ensure port 3306 is not blocked
-
-4. **Database exists:** The `english` database must exist on the server
-
----
-
-## Windows PowerShell Specific Issues
-
-### Execution Policy Error
-
-If you see "cannot be loaded because running scripts is disabled":
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-```
-
-### File Encoding Issues
-
-Ensure `.env` file is saved with UTF-8 encoding (no BOM).
-
----
-
-## Getting Help
-
-If issues persist:
-
-1. Check backend console for error messages
-2. Check browser console (F12) for frontend errors
-3. Verify all services are running:
-   - Backend: http://localhost:3000
-   - Frontend: http://localhost:5174
-4. Try restarting both servers
-
----
-
-## Quick Reset
-
-If you want to start fresh:
-
-```bash
-# Backend
-cd backend
-rm -rf node_modules data
-npm install
-npm run setup-env
-npm run init-db
-npm run scrape
-npm run import
-
-# Frontend
-cd ../frontend
-rm -rf node_modules
-npm install
-```
-
-Then start both servers again.
-
+请提供后端控制台的完整错误日志，我可以进一步诊断。

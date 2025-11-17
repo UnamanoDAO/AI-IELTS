@@ -8,6 +8,8 @@ import Login from '@/views/Login.vue'
 import VocabularyBook from '@/views/VocabularyBook.vue'
 import VocabularyDetail from '@/views/VocabularyDetail.vue'
 import VocabularyTest from '@/views/VocabularyTest.vue'
+import ArticlesView from '@/views/ArticlesView.vue'
+import ReadingView from '@/views/ReadingView.vue'
 import { useUserStore } from '@/stores/user'
 
 const router = createRouter({
@@ -64,6 +66,18 @@ const router = createRouter({
       name: 'VocabularyTest',
       component: VocabularyTest,
       meta: { title: '连线测试', requiresAuth: true }
+    },
+    {
+      path: '/reading-comprehension',
+      name: 'ReadingComprehension',
+      component: ArticlesView,
+      meta: { title: '阅读理解学习', requiresAuth: true }
+    },
+    {
+      path: '/reading-comprehension/:id',
+      name: 'ReadingArticle',
+      component: ReadingView,
+      meta: { title: '阅读文章', requiresAuth: true }
     }
   ]
 })

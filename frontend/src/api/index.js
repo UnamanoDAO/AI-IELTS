@@ -91,4 +91,26 @@ export const quizAPI = {
   generate: (payload) => api.post('/quiz/generate', payload)
 }
 
+// Custom articles API
+export const articlesAPI = {
+  getAll: () => api.get('/articles'),
+  getById: (id) => api.get(`/articles/${id}`),
+  create: (data) => api.post('/articles', data),
+  update: (id, data) => api.put(`/articles/${id}`, data),
+  delete: (id) => api.delete(`/articles/${id}`),
+  translateWord: (articleId, word, sentence) =>
+    api.post(`/articles/${articleId}/translate`, { word, sentence })
+}
+
+// User vocabulary API
+export const vocabularyAPI = {
+  getAll: (params = {}) => api.get('/vocabulary', { params }),
+  getStats: () => api.get('/vocabulary/stats'),
+  add: (data) => api.post('/vocabulary', data),
+  update: (id, data) => api.put(`/vocabulary/${id}`, data),
+  delete: (id) => api.delete(`/vocabulary/${id}`),
+  review: (id) => api.post(`/vocabulary/${id}/review`),
+  check: (word) => api.post('/vocabulary/check', { word })
+}
+
 export default api

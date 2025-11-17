@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const { userId } = req.user;
-    const { masteredOnly, unmasteredOnly } = req.query;
+    const { masteredOnly, unmasteredOnly, limit, offset } = req.query;
 
     let query = 'SELECT * FROM user_vocabulary_book WHERE user_id = ?';
     const params = [userId];
@@ -21,6 +21,17 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 
     query += ' ORDER BY added_at DESC';
+
+    // Add pagination if limit is provided
+    if (limit) {
+      query += ' LIMIT ?';
+      params.push(parseInt(limit));
+
+      if (offset) {
+        query += ' OFFSET ?';
+        params.push(parseInt(offset));
+      }
+    }
 
     const [words] = await pool.query(query, params);
 

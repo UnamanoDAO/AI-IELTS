@@ -19,7 +19,9 @@
       "Bash(taskkill:*)",
       "Bash(findstr:*)",
       "Bash(netstat:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(\"D:\\Buiding3\\LeanEnglish\\backend\\src\\routes\\vocabulary.js\")",
+      "Bash(\"D:\\Buiding3\\LeanEnglish\\TROUBLESHOOTING.md\")"
     ],
     "deny": [
       "Bash(npm run dev:*)",

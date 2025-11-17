@@ -3,6 +3,7 @@ import RPCClient from '@alicloud/pop-core';
 import OSS from 'ali-oss';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
+import aliyunTranslator from './aliyunTranslator.js';
 
 dotenv.config();
 
@@ -202,8 +203,21 @@ async function analyzeWordWithAI(word) {
     "breakdown_text": "组合说明（如：pract(行为) + -ice(名词后缀) = practice）"
   },
   "memory_technique": "记忆技巧（联想、谐音等）",
-  "derived_words": ["相关词1", "相关词2", "相关词3"],
-  "common_usage": "常用搭配或短语",
+  "derived_words": [
+    {
+      "word": "衍生词",
+      "phonetic": "/音标/",
+      "meaning": "中文释义",
+      "usage": "用法说明或例句"
+    }
+  ],
+  "common_usage": [
+    {
+      "phrase": "常用搭配或短语",
+      "meaning": "中文意思",
+      "example": "例句"
+    }
+  ],
   "ielts_examples": [
     {
       "sentence": "雅思风格例句",
@@ -229,11 +243,28 @@ async function analyzeWordWithAI(word) {
    ✅ 正确："advertisements = ad(广告) + vert(转向) + ise(动词) + ment(名词)，想象广告把人们的注意力转向产品"
    ❌ 错误："将单词拆分成部分，理解每个部分的含义"
 
-5. derived_words列出3-5个真实存在的相关衍生词（不要生成不存在的词）
+5. derived_words必须返回3-5个真实存在的衍生词，每个词都要包含：
+   - word: 衍生词本身
+   - phonetic: 音标（必须提供）
+   - meaning: 中文释义（简洁）
+   - usage: 用法说明或例句
+   例如：对于单词"practice"，衍生词应该是：
+   [
+     {"word": "practical", "phonetic": "/ˈpræktɪkl/", "meaning": "实际的；实用的", "usage": "adj. 常用于描述注重实际应用的，如：practical experience（实践经验）"},
+     {"word": "practically", "phonetic": "/ˈpræktɪkli/", "meaning": "实际上；几乎", "usage": "adv. 表示几乎、差不多，如：practically impossible（几乎不可能）"},
+     {"word": "practitioner", "phonetic": "/prækˈtɪʃənə(r)/", "meaning": "从业者；执业医生", "usage": "n. 指某领域的从业人员，如：medical practitioner（执业医生）"}
+   ]
 
-6. common_usage必须是真实的常用搭配或短语，不要写"作为noun使用"这种废话。例如：
-   ✅ 正确："television advertisements, online advertisements, put out advertisements"
-   ❌ 错误："作为noun使用"
+6. common_usage必须返回2-4个真实的常用搭配，每个搭配要包含：
+   - phrase: 短语或搭配
+   - meaning: 中文意思
+   - example: 实际例句
+   例如：对于单词"practice"：
+   [
+     {"phrase": "in practice", "meaning": "实际上；在实践中", "example": "In practice, the new system works very well."},
+     {"phrase": "put into practice", "meaning": "付诸实践", "example": "We need to put these ideas into practice."},
+     {"phrase": "practice makes perfect", "meaning": "熟能生巧", "example": "Keep trying – practice makes perfect!"}
+   ]
 
 7. ielts_examples至少2个真实的雅思风格例句
 
@@ -309,19 +340,41 @@ export async function analyzeWord(word) {
       pronunciation_audio_url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=1`;
     }
 
-    // 4. Build Chinese meaning from AI analysis
+    // 4. Build Chinese meaning from Youdao API (with all parts of speech)
     let chinese_meaning = '';
-    if (aiAnalysis && aiAnalysis.chinese_meanings) {
+    let youdaoData = null;
+
+    try {
+      // Get comprehensive translation from Youdao
+      youdaoData = await aliyunTranslator.getWordDefinition(word);
+
+      if (youdaoData && youdaoData.translations && youdaoData.translations.length > 0) {
+        // Format: each word type on a new line
+        chinese_meaning = youdaoData.translations
+          .map(group => {
+            const type = group.type ? `【${group.type}】` : '';
+            const meanings = group.meanings.join('；');
+            return `${type}${meanings}`;
+          })
+          .join('\n');
+      } else if (youdaoData && youdaoData.translation) {
+        chinese_meaning = youdaoData.translation;
+      }
+    } catch (error) {
+      console.warn('Failed to get Youdao translation, using AI analysis:', error.message);
+    }
+
+    // Fallback to AI analysis if Youdao failed
+    if (!chinese_meaning && aiAnalysis && aiAnalysis.chinese_meanings) {
       chinese_meaning = aiAnalysis.chinese_meanings
-        .map((m, idx) => {
-          const prefix = aiAnalysis.chinese_meanings.length > 1 ? `${idx + 1}. ` : '';
-          // 简洁格式：【词性】词义
-          return `${prefix}【${m.part_of_speech || 'n.'}】${m.meaning}`;
+        .map(m => {
+          const type = m.part_of_speech ? `【${m.part_of_speech}】` : '';
+          return `${type}${m.meaning}`;
         })
         .join('\n');
-    } else if (dictData.meaning) {
+    } else if (!chinese_meaning && dictData.meaning) {
       chinese_meaning = await translateToChinese(dictData.meaning);
-    } else {
+    } else if (!chinese_meaning) {
       chinese_meaning = await translateToChinese(word);
     }
 
@@ -356,18 +409,29 @@ export async function analyzeWord(word) {
     // 7. Derived words
     let derived_words = '';
     if (aiAnalysis?.derived_words && Array.isArray(aiAnalysis.derived_words) && aiAnalysis.derived_words.length > 0) {
-      derived_words = aiAnalysis.derived_words.join(', ');
+      // Check if it's the new detailed format (array of objects)
+      if (typeof aiAnalysis.derived_words[0] === 'object' && aiAnalysis.derived_words[0].word) {
+        // New format: store as JSON string
+        derived_words = JSON.stringify(aiAnalysis.derived_words);
+      } else {
+        // Old format: simple string array
+        derived_words = aiAnalysis.derived_words.join(', ');
+      }
     } else {
       derived_words = generateDerivedWords(word, dictData.entry);
     }
 
     // 8. Common usage
     let common_usage = '';
-    if (aiAnalysis?.common_usage &&
+    if (aiAnalysis?.common_usage && Array.isArray(aiAnalysis.common_usage) && aiAnalysis.common_usage.length > 0) {
+      // New format: array of objects with phrase, meaning, example
+      common_usage = JSON.stringify(aiAnalysis.common_usage);
+    } else if (aiAnalysis?.common_usage &&
+        typeof aiAnalysis.common_usage === 'string' &&
         !aiAnalysis.common_usage.includes('作为') &&
         !aiAnalysis.common_usage.includes('使用') &&
         aiAnalysis.common_usage.length > 10) {
-      // AI返回了有效的常用用法
+      // Old format: AI returned a string
       common_usage = aiAnalysis.common_usage;
     } else if (dictData.entry?.meanings?.[0]) {
       // 从词典API提取常用搭配
